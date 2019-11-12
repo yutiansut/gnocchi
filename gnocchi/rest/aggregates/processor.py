@@ -152,10 +152,10 @@ def aggregated(refs_and_timeseries, operations, from_timestamp=None,
     is_aggregated = False
     result = {}
     for sampling in sorted(series, reverse=True):
-        combine = numpy.concatenate(series[sampling])
         # np.unique sorts results for us
-        times, indices = numpy.unique(combine['timestamps'],
-                                      return_inverse=True)
+        times, indices = numpy.unique(
+            numpy.concatenate([i['timestamps'] for i in series[sampling]]),
+            return_inverse=True)
 
         # create nd-array (unique series x unique times) and fill
         filler = (numpy.NaN if fill in [None, 'null', 'dropna']
@@ -202,7 +202,8 @@ def aggregated(refs_and_timeseries, operations, from_timestamp=None,
         for sampling in sorted(result, reverse=True):
             granularity, times, values, references = result[sampling]
             if fill == "dropna":
-                pos = ~numpy.isnan(values[0])
+                pos = ~numpy.logical_or(numpy.isnan(values[0]),
+                                        numpy.isinf(values[0]))
                 v = values[0][pos]
                 t = times[pos]
             else:
@@ -221,7 +222,8 @@ def aggregated(refs_and_timeseries, operations, from_timestamp=None,
             granularity, times, values, references = result[sampling]
             for i, ref in enumerate(references):
                 if fill == "dropna":
-                    pos = ~numpy.isnan(values[i])
+                    pos = ~numpy.logical_or(numpy.isnan(values[i]),
+                                            numpy.isinf(values[i]))
                     v = values[i][pos]
                     t = times[pos]
                 else:
